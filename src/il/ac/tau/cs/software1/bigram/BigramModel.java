@@ -90,7 +90,7 @@ public class BigramModel {
         File fromFile = new File(fileName);
         Scanner words = new Scanner(new FileReader(fromFile));
         String curr_word;
-        while (curr_voc.length < MAX_VOCABULARY_SIZE && words.hasNext())
+        while (curr_voc_length < MAX_VOCABULARY_SIZE && words.hasNext())
         {
             // Normalizing the word and checking if it is already in the vocabulary
             curr_word = normalizeWord(words.next());
