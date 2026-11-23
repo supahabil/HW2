@@ -1,7 +1,9 @@
 package il.ac.tau.cs.software1.bigram;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.Scanner;
 import java.io.IOException;
 import java.util.Locale;
@@ -166,16 +168,77 @@ public class BigramModel {
      * @pre: fileName is a legal file path
      */
     public void saveModel(String fileName) throws IOException { // Question 3
-        // Establishing stream to write the vocabulary to the file
         File voc_file = new File(fileName + VOC_FILE_SUFFIX);
         File counts_file = new File(fileName + COUNTS_FILE_SUFFIX);
+        voc_file.createNewFile();
+        counts_file.createNewFile();
+        // Establishing stream to write the vocabulary to the file
+        BufferedWriter voc_writer = new BufferedWriter(new FileWriter(voc_file));
+        voc_writer.write(mVocabulary.length + " words" + "\r\n");
+        for (int i = 0; i < mVocabulary.length; i++)
+        {
+            voc_writer.write(i + ", " + mVocabulary[i] + "\r\n");
+        }
+        voc_writer.write("\r\n");
+        voc_writer.close();
+        // Establishing stream to write the bigram counts to the file
+        BufferedWriter counts_writer = new BufferedWriter(new FileWriter(counts_file));
+        for (int i = 0; i < mBigramCounts.length; i++)
+        {
+            for (int j = 0; j < mBigramCounts[i].length; j++)
+            {
+                if (mBigramCounts[i][j] > 0)
+                {
+                    counts_writer.write(i + ", " + j + ": " + mBigramCounts[i][j] + "\r\n");
+                }
+            }
+            counts_writer.write("\r\n");
+        }
+        counts_writer.close();
     }
 
     /*
      * @pre: fileName is a legal file path
      */
     public void loadModel(String fileName) throws IOException { // Question 4
-        // TODO: implement
+        File voc_file = new File(fileName + VOC_FILE_SUFFIX);
+        File counts_file = new File(fileName + COUNTS_FILE_SUFFIX);
+        // Establishing stream to read the vocabulary from the file
+        BufferedReader voc_reader = new BufferedReader(new FileReader(voc_file));
+        String line;
+        line = voc_reader.readLine();
+        // Getting the vocabulary length from the first line of the file and initializing the vocabulary array
+        int voc_length = Integer.parseInt(line.split(" ")[0]);
+        mVocabulary = new String[voc_length];
+        for (int i = 0; i < voc_length; i++)
+        {
+            // Reading the next line and getting the word from it
+            line = voc_reader.readLine();
+            mVocabulary[i] = line.split(", ")[1];
+        }
+        voc_reader.close();
+        // Establishing stream to read the bigram counts from the file
+        BufferedReader counts_reader = new BufferedReader(new FileReader(counts_file));
+        // Initializing the bigram counts array
+        mBigramCounts = new int[voc_length][voc_length];
+        while ((line = counts_reader.readLine()) != null)
+        {
+            // Skipping empty lines
+            if (line.trim().isEmpty())
+            {
+                continue;
+            }
+            // Splitting the line into parts and getting the indices and count from it
+            String[] parts = line.split(": ");
+            String[] indices = parts[0].split(", ");
+            int i = Integer.parseInt(indices[0]);
+            int j = Integer.parseInt(indices[1]);
+            int count = Integer.parseInt(parts[1]);
+            mBigramCounts[i][j] = count;
+        }
+        counts_reader.close();
+
+        
     }
 
     /*
@@ -185,8 +248,34 @@ public class BigramModel {
      * @post: if sentence is probable, according to the model, $ret = true, else, $ret = false
      */
     public boolean isLegalSentence(String sentence) { // Question 5
-        // TODO: implement
-        return false;
+        if (sentence.isEmpty())
+        {
+            return true;
+        }
+        String[] words = sentence.split(" ");
+        String curr_word;
+        String next_word;
+        int curr_index;
+        int next_index;
+        for(int i = 0; i < words.length - 1; i++)
+        {    
+            curr_word = words[i];
+            next_word = words[i+1];
+            curr_index = findIndex(mVocabulary, curr_word);
+            next_index = findIndex(mVocabulary, next_word);
+
+            if (curr_index == ELEMENT_NOT_FOUND || next_index == ELEMENT_NOT_FOUND)
+            {
+                return false;
+            }
+            if (mBigramCounts[curr_index][next_index] == 0)
+            {
+                return false;
+            }
+            
+
+        }
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////////
