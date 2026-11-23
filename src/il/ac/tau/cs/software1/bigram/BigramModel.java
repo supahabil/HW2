@@ -82,19 +82,31 @@ public class BigramModel {
      * @post: mBigramCounts = prev(mBigramCounts)
      */
     public String[] buildVocabularyIndex(String fileName) throws IOException { // Question 1
-        String[] curr_voc = new String[0];
+        String[] curr_voc = new String[MAX_VOCABULARY_SIZE];
+        int curr_voc_length = 0;
+        // Establishing stream to read the file, word by word
         File fromFile = new File(fileName);
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(fromFile));
+        Scanner words = new Scanner(new FileReader(fromFile));
         String curr_word;
-        while (curr_voc.length < MAX_VOCABULARY_SIZE && (curr_word = bufferedReader.readLine()) != null)
+        while (curr_voc.length < MAX_VOCABULARY_SIZE && words.hasNext())
         {
-            
+            // Normalizing the word and checking if it is already in the vocabulary
+            curr_word = normalizeWord(words.next());
+            if (curr_word != null && findIndex(curr_voc, curr_word) == ELEMENT_NOT_FOUND)
+            {
+                curr_voc[curr_voc_length] = curr_word;
+                curr_voc_length++;
+            }
         }
-
-        while (curr_voc.length < MAX_VOCABULARY_SIZE) {
-        }
-
-        return null;
+        words.close();
+        // Copying the vocabulary to a new array of the correct size, and returning it
+        String[] final_voc = new String[curr_voc_length];
+        for (int i = 0; i < curr_voc_length; i++)
+            final_voc[i] = curr_voc[i];
+        if (final_voc.length != 0)
+            {return final_voc;}
+        else
+            {return null;}
     }
 
     /*
@@ -102,8 +114,51 @@ public class BigramModel {
      * @post: mBigramCounts = prev(mBigramCounts)
      */
     public int[][] buildCountsArray(String fileName, String[] vocabulary) throws IOException { // Question 2
-        // TODO: implement
-        return null;
+        if (vocabulary.length == 0)
+            {return null;}
+        // Establishing stream to read the file, line by line
+        File fromFile = new File(fileName);
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(fromFile));
+        int[][] bigram_counts = new int[vocabulary.length][vocabulary.length];
+        // Initializing the bigram_counts array to 0
+        for (int i = 0; i < vocabulary.length; i++)
+        {
+            for (int j = 0; j < vocabulary.length; j++)
+            {
+                bigram_counts[i][j] = 0;
+            }
+        }
+        String curr_word;
+        String next_word;
+        String line;
+        String[] current_line;
+        while ((line = bufferedReader.readLine()) != null)
+        {
+            // Splitting the line into words, and skipping it if it has less than 2 words
+            current_line = line.trim().split("\\s+");
+            if (current_line.length < 2)
+            {
+                continue;
+            }
+            for (int i = 0; i < current_line.length - 1; i++)
+            {
+                // Normalizing the current word and the next word, and checking if they are in the vocabulary
+                curr_word = normalizeWord(current_line[i]);
+                next_word = normalizeWord(current_line[i + 1]);
+                if (curr_word != null && next_word != null)
+                {
+                    int curr_word_index = findIndex(vocabulary, curr_word);
+                    int next_word_index = findIndex(vocabulary, next_word);
+                    if (curr_word_index != ELEMENT_NOT_FOUND && next_word_index != ELEMENT_NOT_FOUND)
+                    {
+                        bigram_counts[curr_word_index][next_word_index]++;
+                    }
+                }
+                
+            }
+        }
+        bufferedReader.close();
+        return bigram_counts;
     }
 
     /*
@@ -111,7 +166,9 @@ public class BigramModel {
      * @pre: fileName is a legal file path
      */
     public void saveModel(String fileName) throws IOException { // Question 3
-        // TODO: implement
+        // Establishing stream to write the vocabulary to the file
+        File voc_file = new File(fileName + VOC_FILE_SUFFIX);
+        File counts_file = new File(fileName + COUNTS_FILE_SUFFIX);
     }
 
     /*
