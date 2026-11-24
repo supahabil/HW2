@@ -177,9 +177,8 @@ public class BigramModel {
         voc_writer.write(mVocabulary.length + " words" + "\r\n");
         for (int i = 0; i < mVocabulary.length; i++)
         {
-            voc_writer.write(i + ", " + mVocabulary[i] + "\r\n");
+            voc_writer.write(i + "," + mVocabulary[i] + "\r\n");
         }
-        voc_writer.write("\r\n");
         voc_writer.close();
         // Establishing stream to write the bigram counts to the file
         BufferedWriter counts_writer = new BufferedWriter(new FileWriter(counts_file));
@@ -189,10 +188,9 @@ public class BigramModel {
             {
                 if (mBigramCounts[i][j] > 0)
                 {
-                    counts_writer.write(i + ", " + j + ": " + mBigramCounts[i][j] + "\r\n");
+                    counts_writer.write(i + "," + j + ":" + mBigramCounts[i][j] + "\r\n");
                 }
             }
-            counts_writer.write("\r\n");
         }
         counts_writer.close();
     }
@@ -214,7 +212,7 @@ public class BigramModel {
         {
             // Reading the next line and getting the word from it
             line = voc_reader.readLine();
-            mVocabulary[i] = line.split(", ")[1];
+            mVocabulary[i] = line.split(",")[1].trim();
         }
         voc_reader.close();
         // Establishing stream to read the bigram counts from the file
@@ -229,11 +227,11 @@ public class BigramModel {
                 continue;
             }
             // Splitting the line into parts and getting the indices and count from it
-            String[] parts = line.split(": ");
-            String[] indices = parts[0].split(", ");
-            int i = Integer.parseInt(indices[0]);
-            int j = Integer.parseInt(indices[1]);
-            int count = Integer.parseInt(parts[1]);
+            String[] parts = line.split(":");
+            String[] indices = parts[0].split(",");
+            int i = Integer.parseInt(indices[0].trim());
+            int j = Integer.parseInt(indices[1].trim());
+            int count = Integer.parseInt(parts[1].trim());
             mBigramCounts[i][j] = count;
         }
         counts_reader.close();
@@ -253,27 +251,38 @@ public class BigramModel {
             return true;
         }
         String[] words = sentence.split(" ");
-        String curr_word;
-        String next_word;
-        int curr_index;
-        int next_index;
-        for(int i = 0; i < words.length - 1; i++)
-        {    
-            curr_word = words[i];
-            next_word = words[i+1];
-            curr_index = findIndex(mVocabulary, curr_word);
-            next_index = findIndex(mVocabulary, next_word);
-
-            if (curr_index == ELEMENT_NOT_FOUND || next_index == ELEMENT_NOT_FOUND)
+        for (String word : words)
+        {
+            if (findIndex(mVocabulary, word) == ELEMENT_NOT_FOUND)
             {
                 return false;
             }
-            if (mBigramCounts[curr_index][next_index] == 0)
+        }
+        if (words.length == 1)
+        {
+            int index = findIndex(mVocabulary, words[0]);
+            if(mBigramCounts[index][index] == 0)
             {
                 return false;
             }
             
+        }
+        else
+        {
+            int curr_index;
+            int next_index;
+            for(int i = 0; i < words.length - 1; i++)
+            {    
+                curr_index = findIndex(mVocabulary, words[i]);
+                next_index = findIndex(mVocabulary, words[i+1]);
 
+                if (mBigramCounts[curr_index][next_index] == 0)
+                {
+                    return false;
+                }
+                
+
+            }
         }
         return true;
     }
